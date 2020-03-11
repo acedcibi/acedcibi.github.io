@@ -1,0 +1,303 @@
+.css-absolute {
+	position: absolute;
+}
+
+.css-black {
+	background: black;
+}
+
+.css-grey {
+	background: grey;
+}
+
+.zindex-front {
+	z-index:1000000000000;
+}
+
+.flex-area {
+	position: absolute;
+	z-index: 10000;
+	width: 100%;
+	height: 100%;
+	padding: 0px;
+}
+
+.flex-item {
+}
+
+.flex-container {
+	display: flex;
+	flex-direction: row-reverse;
+	height: 100%;
+	z-index: 30000;
+	align-items: stretch;
+}
+
+.flex-container .flex-panel {
+	/* background-color: #f1f1f1; */
+	background-color: lightgrey;
+	width: 200px;
+	height: 450px;
+	text-align: center;
+	line-height: 75px;
+	z-index: 20000;
+	display: none;
+}
+
+.flex-container .flex-button-panel {
+	flex-direction: column-reverse;
+	text-align: right;
+	line-height: 75px;
+	align-items: stretch;
+}
+
+#right-panel {
+	overflow: auto;
+}
+
+#property-title {
+	line-height: 50px;
+}
+
+.absolute {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+
+.link {
+	fill: none;
+	stroke: #666;
+	stroke-width: 1.5px;
+}
+
+#subroutine {
+	fill: green;
+}
+
+.panel-area {
+	position: absolute;
+	background: black;
+	z-index: 20000;
+}
+
+.float-right {
+	position: absolute;
+	right: 0;
+	top: 70;
+}
+
+
+.panel-knob {
+	background: black;
+	position: absolute;
+	top: 50%;
+	right: 0px;
+	z-index: 20000;
+}
+
+.pad {
+	position: fixed;
+	right: 0px;
+	top: 1%;
+	height: 95%;
+	margin-right: 10px;
+}
+
+#d3-svg {
+	position: absolute;
+	z-index: 10000;
+	background-color: #F3FCED;
+}
+
+#svg-canvas {
+	//background-image: url("images/logo-infomina.png");
+	background-image: url("images/iMAGIC.PNG");
+	background-repeat: no-repeat;
+	//background-attachment: fixed;
+	background-position: right top; 
+}
+
+.panel {
+	display:none;
+	background: lightgrey;
+	padding:10px 10px 10px 10px;
+}
+
+.cross{
+	background:none;
+	top:0px;
+	left:0;
+	line-height:45px;
+	padding:5px 15px 0px 15px;
+	color:#999;
+	border:0;
+	font-size:1.4em;
+	font-weight:bold;
+	cursor:pointer;
+	outline:none;
+	z-index:10000000000000;
+}
+
+.hamburger{
+	background:none;
+	top:0px;
+	left:0;
+	line-height:45px;
+	padding:5px 15px 0px 15px;
+	color:#999;
+	border:0;
+	font-size:1.4em;
+	font-weight:bold;
+	cursor:pointer;
+	outline:none;
+	z-index:10000000000000;
+}
+
+.right-button {
+	position: relative;
+	background:black;
+	float: left;
+	height: 100%;
+}
+
+/*
+.knob-button {
+	position: absolute;
+	background:black;
+	top: 50%;
+}
+*/
+
+.flex-button {
+	background: black;
+	left:0;
+	line-height:45px;
+	padding:5px 15px 0px 15px;
+	color:#999;
+	border:0;
+	font-size:1.4em;
+	font-weight:bold;
+	cursor:pointer;
+	outline:none;
+	#z-index:10000000000000;
+	z-index:30000;
+	width: 100%;
+}
+
+#button-panel {
+	position: fixed;
+	z-index: 9999;
+}
+
+.d3-container {
+	position: absolute;
+}
+
+.link.subroutine {
+	stroke: purple;
+	z-index: -1;
+}
+
+.link.FLayer {
+	stroke: orange;
+	z-index: -1;
+}
+
+.link.GLayer {
+	stroke: brown;
+	z-index: -1;
+}
+
+.link.SLayer {
+	stroke: cyan;
+	z-index: -1;
+}
+
+.link.OLayer {
+	stroke: green;
+	z-index: -1;
+}
+
+.link.resolved {
+	stroke-dasharray: 0,2 1;
+}
+
+.circle {
+	cursor: move;
+	fill: #ccc;
+	stroke: #333;
+	stroke-width: 1.5px;
+}
+
+.circle.fixed {
+	fill: #f00;
+}
+
+.BLACK {
+	color: black;
+}
+
+.RED {
+	color: red;
+}
+
+text {
+	font: 10px sans-serif;
+	pointer-events: none;
+	text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+}
+
+table, th, td {
+	border: 1px solid black;
+	font-size: 11px;
+}
+
+ol {
+	padding-inline-start: 20px;
+	margin-block-start: 0em;
+	margin-block-end: 0em;
+}
+
+.red {
+	color: red;
+}
+
+/*
+ *  STYLE 7
+ */
+
+.style-7::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	background-color: #F5F5F5;
+	border-radius: 10px;
+}
+
+.style-7::-webkit-scrollbar
+{
+	width: 10px;
+	background-color: #F5F5F5;
+}
+/*
+.style-7::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	background-image: -webkit-gradient(linear,
+									   left bottom,
+									   left top,
+									   color-stop(0.44, rgb(122,153,217)),
+									   color-stop(0.72, rgb(73,125,189)),
+									   color-stop(0.86, rgb(28,58,148)));
+}
+*/
+.style-7::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	background-image: -webkit-gradient(linear,
+									   left bottom,
+									   left top,
+									   color-stop(0.44, rgb(0,0,0)),
+									   color-stop(0.72, rgb(0,0,0)),
+									   color-stop(0.86, rgb(0,0,0)));
+}

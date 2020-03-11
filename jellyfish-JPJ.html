@@ -1,0 +1,604 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="jellyfish-JPJ.css">
+	<link rel="stylesheet" type="text/css" href="flexboxgrid.css">
+</head>
+<body>
+	<div>
+		<div id='d3-svg'>
+			<div class="panel-area">
+				<button class="hamburger">&#9776;</button>
+				<button class="cross" style="display:none;">&#735;</button>
+				<div id="menu-panel" class="panel">
+				</div>
+			</div>
+			<div class="float-right">
+				<div class="flex-container">
+					<div id="right-panel" class="flex-panel">
+						<div id="property-title"><b>Properties</b></div>
+						<div id="property-panel">
+						</div>
+						<div><b>Legend</b>
+							<table width="100%">
+								<tr><td style="background-color:#F3FCED;"><center><font color="green">&#9866;</font></center></td><td>Link to Core Applications</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="orange">&#9866;</font></center></td><td>Link to Supporting Applications</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="brown">&#9866;</font></center></td><td>Link to Global Programs</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="cyan">&#9866;</font></center></td><td>Link to Local Programs</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="grey">&#9866;</font></center></td><td>Link to Tables</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="brown">&#9679;</font></center></td><td>Parent Node</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="red">&#9679;</font></center></td><td>Selected Node</td></tr>
+								<tr><td style="background-color:#F3FCED;"><center><font color="orange">&#9679;</font></center></td><td>Child Node</td></tr>
+							</table>
+						</div>
+					</div>
+					<div class="flex-button-panel">
+						<div>
+							<button id="printer-button" class="flex-button">&#128438;</button>
+						</div>
+						<div>
+							<button id="knob-button" class="flex-button">&#10072;&#10072;</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src='require.js'></script>
+	<script>
+
+		function stringify(obj, replacer, spaces, cycleReplacer) {
+			return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces)
+		}
+
+		function serializer(replacer, cycleReplacer) {
+			var stack = [], keys = []
+
+			if (cycleReplacer == null) cycleReplacer = function(key, value) {
+				if (stack[0] === value) return "[Circular ~]"
+					return "[Circular ~." + keys.slice(0, stack.indexOf(value)).join(".") + "]"
+			}
+
+			return function(key, value) {
+				if (stack.length > 0) {
+					var thisPos = stack.indexOf(this)
+					~thisPos ? stack.splice(thisPos + 1) : stack.push(this)
+					~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key)
+					if (~stack.indexOf(value)) value = cycleReplacer.call(this, key, value)
+				} else 
+					stack.push(value)
+
+				return replacer == null ? value : replacer.call(this, key, value)
+			}
+		}
+
+		require.config({paths:
+			{d3: "d3.v3.min"}});
+		require.config({paths:
+			{jQuery: "jquery-3.3.1.min"}});
+		require.config({paths:
+			{fs: "filesave.min"}});
+		require.config({paths:
+			{c2b: "canvas-toBlob"}});
+
+		require(["d3", "jQuery", "fs", "c2b"], function(d3) {
+			$(".hamburger").click(function() {
+				$("#menu-panel").slideToggle("slow", function() {
+					$(".hamburger").hide();
+					$(".cross").show();
+				});
+			});
+			$(".cross").click(function() {
+				$("#menu-panel").slideToggle("slow", function() {
+					$(".cross").hide();
+					$(".hamburger").show();
+				});	
+			});
+
+			$("#knob-button").click(function() {
+				$("#right-panel").toggle("slide");
+			});
+			$("#printer-button").click(function() {
+				var svgString = getSVGString(d3.select('svg').node());
+				var width = parseFloat(document.getElementById('svg-canvas').getAttribute("width"));
+				var height = parseFloat(document.getElementById('svg-canvas').getAttribute("height"));
+				svgString2Image( svgString, 2*width, 2*height, 'png', save ); // passes Blob and filesize String to the callback
+
+				function save( dataBlob, filesize ){
+					saveAs( dataBlob, 'D3 vis exported to PNG.png' ); // FileSaver.js function
+				}	
+			});
+
+			function getSVGString( svgNode ) {
+				svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+				var cssStyleText = getCSSStyles( svgNode );
+				appendCSS( cssStyleText, svgNode );
+
+				var serializer = new XMLSerializer();
+				var svgString = serializer.serializeToString(svgNode);
+				svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+				svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+
+				return svgString;
+
+				function getCSSStyles( parentElement ) {
+					var nodesToCheck = [ parentElement ], i;
+
+					// Add all the different nodes to check
+					var childNodes = parentElement.getElementsByTagName("*");
+					for (i = 0; i < childNodes.length; i++) {
+						nodesToCheck.push(childNodes[i]);
+					}
+
+					// Extract CSS Rules
+					var extractedCSSRules = [];
+					for (i = 0; i < document.styleSheets.length; i++) {
+						var s = document.styleSheets[i];
+						
+						try {
+							if (!s.cssRules) continue;
+						} catch( e ) {
+							if (e.name !== 'SecurityError') throw e; // for Firefox
+							continue;
+						}
+
+						var cssRules = s.cssRules;
+						var ruleMatches;
+						for (var r = 0; r < cssRules.length; r++) {
+							ruleMatches = nodesToCheck.reduce(function (a, b) {
+								return a || b.matches(cssRules[r].selectorText);
+							}, false);
+							if (ruleMatches)
+								extractedCSSRules.push(cssRules[r].cssText);
+						}
+					}
+					return extractedCSSRules.join(' ');
+				}
+				function appendCSS( cssText, element ) {
+					var styleElement = document.createElement("style");
+					styleElement.setAttribute("type","text/css"); 
+					styleElement.innerHTML = cssText;
+					var refNode = element.hasChildNodes() ? element.children[0] : null;
+					element.insertBefore( styleElement, refNode );
+				}
+			}
+
+			function svgString2Image( svgString, width, height, format, callback ) {
+				var format = format ? format : 'png';
+
+				var imgsrc = 'data:image/svg+xml;base64,'+ btoa( unescape( encodeURIComponent( svgString ) ) ); // Convert SVG string to data URL
+
+				var canvas = document.createElement("canvas");
+				var context = canvas.getContext("2d");
+
+				canvas.width = width;
+				canvas.height = height;
+
+				var image = new Image();
+				image.onload = function() {
+					context.clearRect ( 0, 0, width, height );
+					context.drawImage(image, 0, 0, width, height);
+
+					canvas.toBlob( function(blob) {
+						var filesize = Math.round( blob.length/1024 ) + ' KB';
+						if ( callback ) callback( blob, filesize );
+					});
+					//canvas.toBlob(function(blob){
+					//    link.href = URL.createObjectURL(blob);
+					//    console.log(blob);
+					//},'image/png');
+
+					
+				};
+
+				image.src = imgsrc;
+			}
+		});
+		
+		require(["d3","jQuery"], function(d3) {
+			d3.json("SKCv2-JPJ.json", function(error, graph) {
+				if (error) throw error;
+				// The code in this block is executed when the
+				// d3.js library has been loaded.
+
+				// First, we specify the size of the canvas
+				// containing the visualization (size of the
+				// <div> element).
+
+				var CIRCLE_RADIUS = 7;
+
+				//Variables to set up SVG container
+				var graphClone = jQuery.extend(true, {}, graph["Pairs"]);
+				var width = $(window).width()-20,
+				height = $(window).height()-20;
+				d3.select(window).on("resize", resize);
+
+				//We initialise the force layout object here
+				var force = d3.layout.force()
+					.gravity(0.05)
+					.size([width, height])
+					.linkDistance(150)
+					.charge(-200)
+					.on("tick", tick);
+
+				// set colors to N categorical colors
+				var fill = d3.scale.category10();
+
+				var svg = d3.select("#d3-svg").select("svg");
+				if (svg.empty()) {
+					svg = d3.select("#d3-svg").append("svg")
+						.attr("id", "svg-canvas")
+						.attr("width", width)
+						.attr("height", height);
+				}
+
+				//Create a "g" container elements and create selections to reference throughout
+				var link = svg.append("g").selectAll(".link");
+				var node = svg.append("g").selectAll(".node");
+
+
+				// Define the div for the tooltip
+				var div = d3.select("#network").append("div")
+					.attr("class", "tooltip")
+					.style("opacity", 0);
+
+				var selectedFiles = getFileFilter(graph["Pairs"]);
+				var selectedNodes = getNodes(graphClone, selectedFiles);
+				var selectedLinks = getLinks(graphClone, selectedFiles);
+				//var nodes = getNodes(graph["Pairs"], selectedFiles);
+
+				selectedNodes.sort(function(a, b) {if (a.name < b.name) return 1; if (a.name > b.name) return -1; return 0;});
+				//selectedNodes.sort(function(a, b) {return a-b});
+				//var pack = d3.layout.pack()
+				//	.size([width, height])
+				//	.value(function(d) { return d.size; });
+
+				// Create a "g" container elements and create selections to reference throughout
+				var objPath = svg.append("g").attr('id', 'groupPath').selectAll("path").data(selectedLinks);
+				var objShape = svg.append("g").attr('id', 'groupShape').selectAll("circle").data(selectedNodes);
+				var objText = svg.append("g").attr('id', 'groupText').selectAll("text").data(selectedNodes);
+
+				var selectFileDiv = d3.select('.panel').append('div');
+				//var selectFileDiv = d3.select('.panel').append('div').append('select');
+				selectFileDiv.append('div').append('input').attr('value','Main Nodes :')
+							.style('border','none').style('background','none')
+							.property('disabled',true);
+				var selectFile = selectFileDiv.append('select');
+
+				var selectFocusDiv = d3.select('.panel').append('div');
+				//var selectFocus = d3.select('.panel').append('div').append('select');
+				selectFocusDiv.append('div').append('input').attr('value','Focus Node :')
+							.style('border','none').style('background','none')
+							.property('disabled',true);
+				var selectFocus = selectFocusDiv.append('select');
+
+				// Per-type markers, as they don't inherit styles.
+				var objMarker = svg.append("defs").selectAll("marker").data(["FLayer","SLayer","GLayer"]);	
+
+				var drag = force.drag()
+					.on("dragstart", dragstart);
+
+				function resize() {
+					width = $(window).width()-20;
+					height = $(window).height()-20;
+					svg.attr("width", width)
+						.attr("height", height);
+				}
+
+				function initial() {
+					force.nodes(selectedNodes);
+					force.links(selectedLinks);
+
+					selectFile.attr('id', 'selectFile')
+						.attr('multiple', '')
+						.on('change', onChangeFile);
+
+					selectFile.selectAll('option')
+						.data(selectedFiles).enter()
+						.append('option')
+						.attr('value', function (d) { return d; })
+						.text(function (d) { return d; });
+
+					selectFocus.attr('id', 'selectFocus')
+						.on('change', onChangeFocus);
+
+					selectFocus.selectAll('option')
+						.data(selectedNodes).enter()
+						.append('option')
+						.attr('value', function (d) { return d.name; })
+						.text(function (d) { return d.name; });
+
+					var parentStatus = d3.select('.panel').append('div');
+						parentStatus.append('input').attr('value','Parent :')
+							.style('border','none').style('background','none')
+							.property('disabled',true);
+						parentStatus.append('div').append('textarea')
+						.attr('cols', 70)
+						.attr('id', 'parentStatus');
+
+					var childStatus = d3.select('.panel').append('div');
+						childStatus.append('input').attr('value','Children :')
+							.style('border','none').style('background','none')
+							.property('disabled',true);
+						childStatus.append('div').append('textarea')
+						.attr('cols', 70)
+						.attr('id', 'childStatus');
+					
+					update();
+				}
+
+				var update = function() {
+					objShape.enter().append("circle")
+						.attr("id", function(d) { return 'Circle-'+d.name.replace(/\s|,|\(|\)/g, ''); })
+						.attr("class", "circle")
+						.style("fill", "lightgray")
+						.attr("r", CIRCLE_RADIUS)
+						.on("dblclick", dblclick)
+						.on("click", click)
+						.call(drag);
+
+					objMarker.enter().append("marker")
+						.attr("id", function(d) { return d; })
+						.attr("viewBox", "0 -5 10 10")
+						.attr("refX", 15)
+						.attr("refY", -1.5)
+						.attr("markerWidth", 6)
+						.attr("markerHeight", 6)
+						.attr("orient", "auto")
+						.append("path")
+						.attr("d", "M0,-5L10,0L0,5");
+
+					objText.enter().append("text")
+						.attr("x", 8)
+						.attr("y", ".31em")
+						.attr("id", function(d) { return 'Text-'+d.name.replace(/\s|,|\(|\)/g, ''); })
+						.style("fill", "blue")
+						.text(function(d) { return d.name; });
+
+					objPath.enter().append("path")
+						.attr("class", function(d) { return "link " + d.type; })
+						.attr("marker-end", function(d) { return "url(#" + d.type + ")"; });
+				}
+
+				function onChangeFile() {
+					selectedNodes = [];
+					selectedLinks = [];
+					selectMarker = [];
+					force.nodes(selectedNodes);
+					force.links(selectedLinks);
+					objPath = svg.selectAll("path").data(selectedLinks);
+					objShape = svg.selectAll("circle").data(selectedNodes);
+					objText = svg.selectAll("text").data(selectedNodes);
+					objMarker = svg.selectAll("marker").data(selectMarker);	
+
+					objPath.exit().remove();
+					objText.exit().remove();
+					objShape.exit().remove();
+					objMarker.exit().remove();
+					selectedFiles = [];
+					var optionFiles = d3.select('#selectFile').node().options;
+					for (var i=0; i<optionFiles.length; i++) {
+						var option = optionFiles[i];
+						if (option.selected) {
+							selectedFiles.push(option.value);
+						}
+					}
+					var graphChange = jQuery.extend(true, {}, graph["Pairs"]);
+					selectedNodes = getNodes(graphChange, selectedFiles);
+					selectedNodes.sort(function(a, b) {if (a.name < b.name) return 1; if (a.name > b.name) return -1; return 0;});
+					selectedLinks = getLinks(graphChange, selectedFiles);
+
+					selectFocus.selectAll("*").remove();
+					selectFocus.selectAll('option')
+						.data(selectedNodes).enter()
+						.append('option')
+						.attr('value', function (d) { return d.name; })
+						.text(function (d) { return d.name; });
+
+
+					force.nodes(selectedNodes);
+					force.links(selectedLinks);
+
+					graphClone = jQuery.extend(true, {}, graph["Pairs"]);
+					selectedNodes = getNodes(graphClone, selectedFiles);
+					selectedNodes.sort(function(a, b) {if (a.name < b.name) return 1; if (a.name > b.name) return -1; return 0;});
+					selectedLinks = getLinks(graphClone, selectedFiles);
+
+					selectFocus.selectAll("*").remove();
+					selectFocus.selectAll('option')
+						.data(selectedNodes).enter()
+						.append('option')
+						.attr('value', function (d) { return d.name; })
+						.text(function (d) { return d.name; });
+
+
+					force.nodes(selectedNodes);
+					force.links(selectedLinks);
+					force.start();
+					objMarker = svg.select("defs").selectAll("marker").data(["FLayer","SLayer","GLayer"]);	
+					objPath = svg.select("#groupPath").selectAll("path").data(selectedLinks);
+					objShape = svg.select("#groupShape").selectAll("circle").data(selectedNodes);
+					objText = svg.select("#groupText").selectAll("text").data(selectedNodes);
+					update();
+				}
+
+				function toUl(list) {
+					ulHtml = "<ol>";
+					for (i in list) {
+						ulHtml = ulHtml + "<li>"+list[i]+"</li>";
+					}
+					ulHtml = ulHtml + "</ol>";
+					return ulHtml;
+				}
+
+				function onChangeFocus() {
+					var selectValue = d3.select('#selectFocus').property('value');
+					var parentList = [];
+					var childList = [];
+					if (selectValue.length>0) {
+						Object.keys(graphClone).forEach(function(file, index) {
+							this[file].forEach(function(link) {
+								if (selectedFiles.includes(file)) {
+									if (link.source.name==selectValue) {
+										if (!childList.includes(link.target.name)) {
+											childList.push(link.target.name);
+										}
+									}
+									if (link.target.name==selectValue) {
+										if (!parentList.includes(link.source.name)) {
+											parentList.push(link.source.name);
+										}
+									}
+								}
+							});
+						}, graphClone);
+						d3.select('#parentStatus').text(parentList.toString());
+						d3.select('#childStatus').text(childList.toString());
+						d3.select('.dependents').html(toUl(childList));
+
+						d3.select('#groupShape').selectAll("circle").style("fill", "lightgray");
+						d3.select('#groupText').selectAll("text").style("fill", "blue");
+						for (var cNode in childList) {
+							d3.select('#Circle-'+childList[cNode].replace(/\s|,|\(|\)/g, '')).style('fill', 'orange');
+						}
+						for (var pNode in parentList) {
+							d3.select('#Circle-'+parentList[pNode].replace(/\s|,|\(|\)/g, '')).style('fill', 'brown');
+						}
+						d3.select('#Circle-'+selectValue.replace(/\s|,|\(|\)/g, '')).style('fill', 'red');
+						d3.select('#Text-'+selectValue.replace(/\s|,|\(|\)/g, '')).style('fill', 'red');
+					}
+					console.log("Change Focus");
+	
+				}
+
+				// RENDER XY  ---------------------------
+				function tick() {
+					objShape.attr("transform", transform);
+					objText.attr("transform", transform);
+					objPath.attr("d", linkArc);
+				}
+
+				function getFileFilter(links) {
+					var selectFiles = [];
+					Object.keys(links).forEach(function(file, index) {
+						selectFiles.push(file);
+					}, links);
+					return selectFiles;
+				}
+
+				function getSelectedNodes(links, filter) {
+					var selectNodes = [];
+					Object.keys(links).forEach(function(file, index) {
+						if (filter.includes(file)) {
+							this[file].forEach(function(link) {
+								if (!selectNodes.includes(link.source)) {
+									selectNodes.push(link.source);
+								}
+								if (!selectNodes.includes(link.target)) {
+									selectNodes.push(link.target);
+								}
+							});
+						}
+					}, links);
+					return selectNodes;
+				}
+
+				// Compute the distinct nodes from the links.
+				function getNodes(links, filter) {
+					var nodes = {};
+					Object.keys(links).forEach(function(file, index) {
+						if (filter.includes(file)) {
+							this[file].forEach(function(link) {
+								link.source = nodes[link.source] || (nodes[link.source] = {name: link.source, 'file':file, 'status':true});
+								link.target = nodes[link.target] || (nodes[link.target] = {name: link.target, 'file':file, 'status':true});
+							});
+						}
+					}, links);
+					return d3.values(nodes);
+				}
+
+				function getLinks(links, filter) {
+					var selectedNodes = []
+					Object.keys(links).forEach(function(file, index) {
+						if (filter.includes(file)) {
+							this[file].forEach(function(link) {
+								if (!selectedNodes.includes(link)) {
+									selectedNodes.push(link);
+								}
+							});
+						}
+					}, links);
+					return selectedNodes;
+				}
+
+				function linkArc(d) {
+					var dx = d.target.x - d.source.x,
+					dy = d.target.y - d.source.y,
+					dr = Math.sqrt(dx * dx + dy * dy);
+					return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+				}
+
+				function transform(d) {
+					return "translate(" + d.x + "," + d.y + ")";
+				}
+
+				function click(d) {
+					var circleName = d3.select(this)[0][0].__data__.name;
+					var selectValue = d3.select('#selectFocus');
+					var propertyPanel = d3.select('#property-panel');
+					console.log("node:", circleName);
+					htmlStr = "<table style='width:100%'>";
+					var selectValueValue = selectValue.property('value');
+					var childList = [];
+					var parentList = [];
+					if (graph["Property"]["Programs"][circleName]) {
+						htmlStr = htmlStr + "<tr><td>System</td><td>"+circleName+"</td></tr>";
+						for (i in graph["Property"]["Programs"][circleName]) {
+							htmlStr = htmlStr + "<tr><td>"+i+"</td><td>"+graph["Property"]["Programs"][circleName][i]+"</td></tr>";
+						}
+					} else if (graph["Property"]["Business"][circleName]) {
+						htmlStr = htmlStr + "<tr><td>Bus. Func.</td><td>"+circleName+"</td></tr>";
+						for (i in graph["Property"]["Business"][circleName]) {
+							htmlStr = htmlStr + "<tr><td>"+i+"</td><td>"+graph["Property"]["Business"][circleName][i]+"</td></tr>";
+						}
+					} else if (graph["Property"]["Routine"][circleName]) {
+						htmlStr = htmlStr + "<tr><td>Program</td><td>"+circleName+"</td></tr>";
+						for (i in graph["Property"]["Routine"][circleName]) {
+							htmlStr = htmlStr + "<tr><td>"+i+"</td><td>"+graph["Property"]["Routine"][circleName][i]+"</td></tr>";
+						}
+					} else if (graph["Property"]["Organization"][circleName]) {
+						htmlStr = htmlStr + "<tr><td>Organization</td><td>"+circleName+"</td></tr>";
+						for (i in graph["Property"]["Organization"][circleName]) {
+							htmlStr = htmlStr + "<tr><td>"+i+"</td><td>"+graph["Property"]["Organization"][circleName][i]+"</td></tr>";
+						}
+					} else if (graph["Property"]["Table"][circleName]) {
+						htmlStr = htmlStr + "<tr><td>Table</td><td>"+circleName+"</td></tr>";
+						for (i in graph["Property"]["Table"][circleName]) {
+							htmlStr = htmlStr + "<tr><td>"+i+"</td><td>"+graph["Property"]["Table"][circleName][i]+"</td></tr>";
+						}
+					}
+					htmlStr = htmlStr + "<tr><td>Dependents</td><td class='dependents'>"+childList.toString()+"</td></tr>";
+					htmlStr = htmlStr + "</table>";
+					propertyPanel.html(htmlStr);
+					selectValue.property('value', circleName);
+					selectValue.on("change")();
+				}
+
+
+				function dblclick(d) {
+					d3.select(this).classed("fixed", d.fixed = false);
+				}
+
+				function dragstart(d) {
+					d3.select(this).classed("fixed", d.fixed = true);
+				}
+
+				initial();
+				force.start();
+
+
+			});
+		});
+	</script>
+</body>
+</html>
